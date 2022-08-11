@@ -7,27 +7,6 @@ M.config = {
 
 function M.setup(config)
   M.config = vim.tbl_extend('force', M.config, config)
-
-  vim.keymap.set(
-    'n',
-    '<Plug>(nice-scroll-force)',
-    '<Cmd>lua require("nice-scroll").force()<CR>'
-  )
-  vim.keymap.set(
-    'n',
-    '<Plug>(nice-scroll-moderate)',
-    '<Cmd>lua require("nice-scroll").moderate()<CR>'
-  )
-  vim.keymap.set(
-    'n',
-    '<Plug>(nice-scroll-search)',
-    '<Cmd>lua require("nice-scroll").search()<CR>'
-  )
-  vim.keymap.set(
-    'n',
-    '<Plug>(nice-scroll-jump)',
-    '<Cmd>lua require("nice-scroll").jump()<CR>'
-  )
 end
 
 -- File line number, abusolute
@@ -49,16 +28,35 @@ local w = {
     return vim.api.nvim_win_get_height(0)
   end,
   current = function()
-    return vim.fn.winline '.'
+    return vim.fn.winline()
   end,
-  target = function(self, n, is_reverse)
+  target = function(self, n)
     assert(type(n) == 'number' and n > 0)
-    if n <= 1 then
-      return math.floor(self.last() * (is_reverse and 1 - n or n))
-    end
-    return is_reverse and self.last() - n or n
+    return n <= 1 and math.floor(self.last() * n) or n
   end,
 }
+
+local w0_saved = nil
+function M.prepare()
+  w0_saved = vim.fn.getpos('w0')[2]
+end
+
+-- If page goes down, return 1
+-- If page goes up, return -1
+function M.check()
+  local w0 = vim.fn.getpos('w0')[2]
+  if w0 > w0_saved then
+    return 1
+  end
+  if w0 < w0_saved then
+    return -1
+  end
+  return 0
+end
+
+local function reverse(n)
+  return n <= 1 and 1 - n or w.last() - n
+end
 
 local function cmdf(s, ...)
   vim.cmd(string.format(s, ...))
@@ -73,40 +71,48 @@ local function exec(target, current)
   end
 end
 
-function M.force(n, is_reverse)
+---@param n number|'r' r = reverse
+function M.force(n)
   n = n and n or M.config.default
-  exec(w:target(n, is_reverse), w.current)
+  if n == 'r' then
+    n = reverse(M.config.default)
+  end
+  exec(w:target(n), w.current())
 end
 
 function M.moderate(n)
+  n = n and n or M.config.default
   if not M.config.eof then
     M.force(n)
     return
   end
-  local distance_from_current_to_eof = f.eof - f.current
+  local distance_from_current_to_eof = f.eof() - f.current()
   -- If M.force(n) is done, window line number of EOF will be _eof.
   local _eof = w:target(n) + distance_from_current_to_eof
   local eof_target = w:target(M.config.eof)
   -- This is a line number comparison, so if it's smaller, it's over the limit.
   if _eof < eof_target then
-    local eof_current = w.current + distance_from_current_to_eof
+    local eof_current = w.current() + distance_from_current_to_eof
     exec(eof_target, eof_current)
   else
     M.force(n)
   end
 end
 
-function M.search(n, is_reverse)
-  if not is_reverse and w.current() == w.last() then
+function M.search(n)
+  n = n and n or M.config.default
+  local c = M.check()
+  if c > 0 then
     M.moderate(n)
   end
-  if is_reverse and w.current() == w.first() then
-    M.force(n, true)
+  if c < 0 then
+    M.force(reverse(n))
   end
 end
 
 function M.jump(n)
-  if w.current() == w.last() or w.current() == w.first() then
+  n = n and n or M.config.default
+  if M.check() ~= 0 then
     M.moderate(n)
   end
 end
