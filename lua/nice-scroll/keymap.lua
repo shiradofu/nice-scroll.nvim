@@ -2,6 +2,8 @@ local nice_scroll = require 'nice-scroll'
 
 local K = {}
 
+---@param fn function
+---@param name 'directional'|'jump'
 local function wrap_fn(fn, name)
   return function()
     nice_scroll.prepare()
@@ -11,7 +13,7 @@ local function wrap_fn(fn, name)
 end
 
 ---@param str string
----@param name string
+---@param name 'directional'|'jump'
 ---@param countable boolean
 local function wrap_str(str, name, countable)
   local rhs = str
@@ -37,6 +39,9 @@ local function wrap_str(str, name, countable)
   return rhs
 end
 
+---@param rhs string
+---@param options string[]
+---@return string
 local function handle_options_str(rhs, options)
   if vim.tbl_contains(options, 'hlslens') then
     rhs = rhs .. "<Cmd>lua require('hlslens').start()<CR>"
@@ -44,6 +49,9 @@ local function handle_options_str(rhs, options)
   return rhs
 end
 
+---@param wrapped string|function
+---@param countable boolean
+---@param options string[]|nil
 function K.directional(wrapped, countable, options)
   options = options or {}
 
@@ -56,6 +64,9 @@ function K.directional(wrapped, countable, options)
   end
 end
 
+---@param wrapped string|function
+---@param countable boolean
+---@param options string[]|nil
 function K.jump(wrapped, countable, options)
   options = options or {}
 
