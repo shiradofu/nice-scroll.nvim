@@ -7,8 +7,8 @@ local M = {}
 ---@field eof number|nil
 ---@field search1 number|nil
 M.config = {
-  default = 0.3,
-  eof = 0.7,
+  default = 0.25,
+  eof = 0.75,
   search1 = 1,
 }
 
