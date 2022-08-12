@@ -35,21 +35,34 @@ local function wrap_str(str, name, countable)
   return rhs
 end
 
-function K.search(wrapped, countable)
+local function handle_options_str(rhs, options)
+  if vim.tbl_contains(options, 'hlslens') then
+    rhs = rhs .. "<Cmd>lua require('hlslens').start()<CR>"
+  end
+  return rhs
+end
+
+function K.search(wrapped, countable, options)
+  options = options or {}
+
   if type(wrapped) == 'function' then
     return wrap_fn(wrapped, 'search')
   end
   if type(wrapped) == 'string' then
-    return wrap_str(wrapped, 'search', countable)
+    local rhs = wrap_str(wrapped, 'search', countable)
+    return handle_options_str(rhs, options)
   end
 end
 
-function K.jump(wrapped, countable)
+function K.jump(wrapped, countable, options)
+  options = options or {}
+
   if type(wrapped) == 'function' then
     return wrap_fn(wrapped, 'jump')
   end
   if type(wrapped) == 'string' then
-    return wrap_str(wrapped, 'jump', countable)
+    local rhs = wrap_str(wrapped, 'jump', countable)
+    return handle_options_str(rhs, options)
   end
 end
 
