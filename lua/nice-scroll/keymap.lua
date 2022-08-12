@@ -24,9 +24,9 @@ local function wrap_str(str, name, countable)
     end
   end
 
-  rhs = '<Cmd>lua require("nice-scroll").prepare()<CR>'
+  rhs = "<Cmd>lua require('nice-scroll').prepare()<CR>"
     .. rhs
-    .. ('<Cmd>lua require("nice-scroll").%s()<CR>'):format(name)
+    .. ("<Cmd>lua require('nice-scroll').%s()<CR>"):format(name)
 
   if countable then
     rhs = '<Cmd>let b:count1 = v:count1<CR>'
