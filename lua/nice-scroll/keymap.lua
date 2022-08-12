@@ -1,10 +1,12 @@
+local nice_scroll = require 'nice-scroll'
+
 local K = {}
 
 local function wrap_fn(fn, name)
   return function()
-    K.prepare()
+    nice_scroll.prepare()
     fn()
-    require('nice-scroll')[name]()
+    nice_scroll[name]()
   end
 end
 
