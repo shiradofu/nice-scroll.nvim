@@ -2,11 +2,49 @@ local M = {}
 
 M.config = {
   default = 0.25,
+  search1 = 1,
   eof = 0.75,
 }
 
 function M.setup(config)
   M.config = vim.tbl_extend('force', M.config, config)
+
+  for _, v in pairs(M.config) do
+    assert(type(v) == 'number' and v > 0)
+  end
+
+  if M.config.search1 then
+    local aug = vim.api.nvim_create_augroup('NiceScrollNvim', {})
+
+    vim.api.nvim_create_autocmd('CmdlineEnter', {
+      pattern = '*',
+      group = aug,
+      callback = function()
+        local cmdtype = vim.v.event.cmdtype
+        if
+          (cmdtype == '/' or cmdtype == '?')
+          and vim.fn.bufname() ~= '[Command Line]'
+        then
+          M.prepare()
+        end
+      end,
+    })
+
+    vim.api.nvim_create_autocmd('CmdlineLeave', {
+      pattern = '*',
+      group = aug,
+      callback = function()
+        local e = vim.v.event
+        if
+          (e.cmdtype == '/' or e.cmdtype == '?')
+          and not e.abort
+          and vim.fn.bufname() ~= '[Command Line]'
+        then
+          vim.defer_fn(M.search1, 0)
+        end
+      end,
+    })
+  end
 end
 
 -- File line number, abusolute
@@ -41,8 +79,8 @@ function M.prepare()
   w0_saved = vim.fn.getpos('w0')[2]
 end
 
--- If page goes down, return 1
--- If page goes up, return -1
+-- If page goes down, returns 1
+-- If page goes up, returns -1
 function M.check()
   local w0 = vim.fn.getpos('w0')[2]
   if w0 > w0_saved then
@@ -114,6 +152,21 @@ function M.jump(n)
   n = n and n or M.config.default
   if M.check() ~= 0 then
     M.moderate(n)
+  end
+end
+
+function M.search1()
+  local limit = M.config.search1
+  if not limit then
+    return
+  end
+  if limit < 1 then
+    limit = math.floor(w.last() * limit)
+  end
+  local c = w.current()
+  limit = limit - 1
+  if (c <= w.first() + limit) or (c >= w.last() - limit) then
+    M.moderate()
   end
 end
 
