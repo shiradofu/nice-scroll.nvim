@@ -17,8 +17,8 @@ function M.setup(config)
     local aug = vim.api.nvim_create_augroup('NiceScrollNvim', {})
 
     vim.api.nvim_create_autocmd('CmdlineEnter', {
-      pattern = '*',
       group = aug,
+      pattern = '*',
       callback = function()
         local cmdtype = vim.v.event.cmdtype
         if
@@ -31,8 +31,8 @@ function M.setup(config)
     })
 
     vim.api.nvim_create_autocmd('CmdlineLeave', {
-      pattern = '*',
       group = aug,
+      pattern = '*',
       callback = function()
         local e = vim.v.event
         if
@@ -46,8 +46,8 @@ function M.setup(config)
     })
 
     vim.api.nvim_create_autocmd('SearchWrapped', {
-      pattern = '*',
       group = aug,
+      pattern = '*',
       callback = function()
         vim.b.nice_scroll_wrapped = true
       end,
@@ -115,6 +115,15 @@ end
 
 local function exec(target, current)
   local distance = target - current
+
+  -- Depending on the default value, executing M.fit() multiple times
+  -- results shaking the window. Usually, we don't do call M.fit twice
+  -- or more in a row, but this behavior is a bit wired.
+  -- The condition below surpress it.
+  if math.abs(distance) <= 1 then
+    return
+  end
+
   if distance < 0 then
     cmdf([[exe "normal! %d\<C-e>"]], math.abs(distance))
   else
