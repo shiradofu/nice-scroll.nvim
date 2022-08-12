@@ -1,9 +1,9 @@
 local M = {}
 
 M.config = {
-  default = 0.25,
+  default = 0.3,
+  eof = 0.7,
   search1 = 1,
-  eof = 0.75,
 }
 
 function M.setup(config)
@@ -44,6 +44,14 @@ function M.setup(config)
         end
       end,
     })
+
+    vim.api.nvim_create_autocmd('SearchWrapped', {
+      pattern = '*',
+      group = aug,
+      callback = function()
+        vim.b.nice_scroll_wrapped = true
+      end,
+    })
   end
 end
 
@@ -82,14 +90,19 @@ end
 -- If page goes down, returns 1
 -- If page goes up, returns -1
 function M.check()
+  local c = 0
   local w0 = vim.fn.getpos('w0')[2]
   if w0 > w0_saved then
-    return 1
+    c = 1
   end
   if w0 < w0_saved then
-    return -1
+    c = -1
   end
-  return 0
+  if vim.b.nice_scroll_wrapped then
+    c = c * -1
+  end
+  vim.b.nice_scroll_wrapped = false
+  return c
 end
 
 local function reverse(n)
