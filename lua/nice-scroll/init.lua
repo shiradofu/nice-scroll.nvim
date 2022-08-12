@@ -138,9 +138,9 @@ local function exec(target, current)
   end
 
   if distance < 0 then
-    vim.cmd([[exe "normal! %d\<C-e>"]]):format(math.abs(distance))
+    vim.cmd(([[exe "normal! %d\<C-e>"]]):format(math.abs(distance)))
   else
-    vim.cmd([[exe "normal! %d\<C-y>"]]):format(distance)
+    vim.cmd(([[exe "normal! %d\<C-y>"]]):format(distance))
   end
 end
 
