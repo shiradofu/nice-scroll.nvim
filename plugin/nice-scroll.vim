@@ -4,6 +4,6 @@ endif
 
 let g:loaded_nice_scroll_nvim = 1
 
-nnoremap <Plug>(nice-scroll-force)    <Cmd>lua require("nice-scroll").force()<CR>
-nnoremap <Plug>(nice-scroll-force-r)  <Cmd>lua require("nice-scroll").force("r")<CR>
-nnoremap <Plug>(nice-scroll-moderate) <Cmd>lua require("nice-scroll").moderate()<CR>
+nnoremap <Plug>(nice-scroll-fit)     <Cmd>lua require("nice-scroll").fit()<CR>
+nnoremap <Plug>(nice-scroll-fit-r)   <Cmd>lua require("nice-scroll").fit("r")<CR>
+nnoremap <Plug>(nice-scroll-fit-eof) <Cmd>lua require("nice-scroll").fit_eof()<CR>

@@ -123,7 +123,7 @@ local function exec(target, current)
 end
 
 ---@param n number|'r' r = reverse
-function M.force(n)
+function M.fit(n)
   n = n and n or M.config.default
   if n == 'r' then
     n = reverse(M.config.default)
@@ -131,14 +131,14 @@ function M.force(n)
   exec(w:target(n), w.current())
 end
 
-function M.moderate(n)
+function M.fit_eof(n)
   n = n and n or M.config.default
   if not M.config.eof then
-    M.force(n)
+    M.fit(n)
     return
   end
   local distance_from_current_to_eof = f.eof() - f.current()
-  -- If M.force(n) is done, window line number of EOF will be _eof.
+  -- If M.fit(n) is done, window line number of EOF will be _eof.
   local _eof = w:target(n) + distance_from_current_to_eof
   local eof_target = w:target(M.config.eof)
   -- This is a line number comparison, so if it's smaller, it's over the limit.
@@ -146,25 +146,25 @@ function M.moderate(n)
     local eof_current = w.current() + distance_from_current_to_eof
     exec(eof_target, eof_current)
   else
-    M.force(n)
+    M.fit(n)
   end
 end
 
-function M.search(n)
+function M.directional(n)
   n = n and n or M.config.default
   local c = M.check()
   if c > 0 then
-    M.moderate(n)
+    M.fit_eof(n)
   end
   if c < 0 then
-    M.force(reverse(n))
+    M.fit(reverse(n))
   end
 end
 
 function M.jump(n)
   n = n and n or M.config.default
   if M.check() ~= 0 then
-    M.moderate(n)
+    M.fit_eof(n)
   end
 end
 
@@ -179,7 +179,7 @@ function M.search1()
   local c = w.current()
   limit = limit - 1
   if (c <= w.first() + limit) or (c >= w.last() - limit) then
-    M.moderate()
+    M.fit_eof()
   end
 end
 

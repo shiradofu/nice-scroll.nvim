@@ -42,14 +42,14 @@ local function handle_options_str(rhs, options)
   return rhs
 end
 
-function K.search(wrapped, countable, options)
+function K.directional(wrapped, countable, options)
   options = options or {}
 
   if type(wrapped) == 'function' then
-    return wrap_fn(wrapped, 'search')
+    return wrap_fn(wrapped, 'directional')
   end
   if type(wrapped) == 'string' then
-    local rhs = wrap_str(wrapped, 'search', countable)
+    local rhs = wrap_str(wrapped, 'directional', countable)
     return handle_options_str(rhs, options)
   end
 end
