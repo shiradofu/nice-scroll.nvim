@@ -87,17 +87,14 @@ function M.prepare()
   w0_saved = vim.fn.getpos('w0')[2]
 end
 
--- If page goes down, returns 1
--- If page goes up, returns -1
+---Chekc if the page has moved between pre and post command execution.
+---'w0' refers to the file's absolute line number, which is shown at the
+---top of the window.
+---If the page goes down, this returns positive, if goes up, returns negative.
+---When `SearchWrapped` fired, the behavior becomes opposite.
 function M.check()
-  local c = 0
   local w0 = vim.fn.getpos('w0')[2]
-  if w0 > w0_saved then
-    c = 1
-  end
-  if w0 < w0_saved then
-    c = -1
-  end
+  local c = w0 - w0_saved
   if vim.b.nice_scroll_wrapped then
     c = c * -1
   end
