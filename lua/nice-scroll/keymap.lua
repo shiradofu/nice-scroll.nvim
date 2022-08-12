@@ -8,18 +8,28 @@ local function wrap_fn(fn, name)
   end
 end
 
+---@param str string
+---@param name string
+---@param countable boolean
 local function wrap_str(str, name, countable)
-  local rhs = '%s'
+  local rhs = str
   if countable then
-    rhs = "<Cmd>exe 'normal! ' . b:count1 . '%s'<CR>"
+    if str:find '<[Cc][Mm][Dd]>' then
+      local last = str:find '<[Cc][Rr]>' - 1
+      rhs = ("<Cmd>exe b:count1 . '%s'<CR>"):format(str:sub(#'<Cmd>' + 1, last))
+    else
+      rhs = ("<Cmd>exe 'normal! ' . b:count1 . '%s'<CR>"):format(str)
+    end
   end
 
   rhs = '<Cmd>lua require("nice-scroll").prepare()<CR>'
-    .. rhs:format(str)
+    .. rhs
     .. ('<Cmd>lua require("nice-scroll").%s()<CR>'):format(name)
 
   if countable then
-    rhs = '<Cmd>let b:count1 = v:count1<CR>' .. rhs .. '<Cmd>unlet b:count1<CR>'
+    rhs = '<Cmd>let b:count1 = v:count1<CR>'
+      .. rhs
+      .. '<Cmd>silent! unlet b:count1<CR>'
   end
 
   return rhs
