@@ -62,6 +62,7 @@ kind a collegues of `zz`, `zt`, or `zb`.
 
 ```lua
 vim.keymap.set({'n', 'x' }, 'zh', "<Plug>(nice-scroll-fit)")
+-- see
 vim.keymap.set({'n', 'x' }, 'zl', "<Plug>(nice-scroll-fit-r)")
 
 -- or eof version
@@ -78,7 +79,7 @@ Vim commands `NiceScrollFit` and `NiceScrollFitEof` are also available.
 
 ### Hooking into Jumps
 
-#### `require('nice-scroll.hook').hook()`
+#### `require('nice-scroll').hook()`
 
 You can hook into a cursor jump and execute `fit_eof()` by `hook()` function.
 This function wraps a string or a lua function that is taken as the first
@@ -86,13 +87,13 @@ argument and returns it. This can be assigned to keymap rhs directly, so you can
 do:
 
 ```lua
-local nshook = require('nice-scroll.hook').hook
-vim.keymap.set({ 'n', 'x' }, 'g;', nshook('g;'))
-vim.keymap.set({ 'n', 'x' }, 'g,', nshook('g,'))
-vim.keymap.set({ 'n', 'x' }, ']q', nshook('<Cmd>cnext<CR>'))
-vim.keymap.set({ 'n', 'x' }, '[q', nshook('<Cmd>cprev<CR>'))
-vim.keymap.set({ 'n', 'x' }, '[e', nshook(vim.diagnostic.goto_prev))
-vim.keymap.set({ 'n', 'x' }, ']e', nshook(vim.diagnostic.goto_next))
+local ns = require('nice-scroll')
+vim.keymap.set({ 'n', 'x' }, 'g;', ns.hook('g;'))
+vim.keymap.set({ 'n', 'x' }, 'g,', ns.hook('g,'))
+vim.keymap.set({ 'n', 'x' }, ']q', ns.hook('<Cmd>cnext<CR>'))
+vim.keymap.set({ 'n', 'x' }, '[q', ns.hook('<Cmd>cprev<CR>'))
+vim.keymap.set({ 'n', 'x' }, '[e', ns.hook(vim.diagnostic.goto_prev))
+vim.keymap.set({ 'n', 'x' }, ']e', ns.hook(vim.diagnostic.goto_next))
 ```
 
 `hook()` takes the optional second argument, and it contains:
@@ -170,8 +171,9 @@ have to do it manually. (If nvim-hlslens is not installed, it is just ignored.)
 ```lua
 -- This is perfect.
 -- Ensure vim.g.loaded_nvim_hlslens == 1 before these are loaded.
-vim.keymap.set({ 'n', 'x' }, 'n', nshook('n'))
-vim.keymap.set({ 'n', 'x' }, 'N', nshook('N'))
+local ns = require('nice-scroll')
+vim.keymap.set({ 'n', 'x' }, 'n', ns.hook('n'))
+vim.keymap.set({ 'n', 'x' }, 'N', ns.hook('N'))
 ```
 
 ## 🙏 Credits
