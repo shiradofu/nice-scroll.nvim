@@ -126,7 +126,7 @@ function M._hook_prepare()
   w0_saved = vim.fn.getpos('w0')[2]
 end
 
----Chekc if the page has moved between pre and post jump.
+---Chekc if the page has scrolled between pre and post jump.
 ---@return boolean
 local function check()
   return vim.fn.getpos('w0')[2] ~= w0_saved

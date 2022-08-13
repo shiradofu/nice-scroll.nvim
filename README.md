@@ -103,7 +103,7 @@ vim.keymap.set({ 'n', 'x' }, ']e', ns.hook(vim.diagnostic.goto_next))
 -- default values
 {
   -- If true, mappings using v:count1 like 3g; can be used.
-  -- This has effect only on string wrapping.
+  -- This has effect only on string mappings.
   countable = false,
   -- If true, the position where the cursorline will be moved is inverted.
   -- Suppose you configure the plugin to move the cursorline 10 lines below
