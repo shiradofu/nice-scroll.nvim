@@ -12,56 +12,6 @@ M.config = {
   search1 = 1,
 }
 
----@param config NiceScroll.Config
-function M.setup(config)
-  M.config = vim.tbl_extend('force', M.config, config)
-
-  for _, v in pairs(M.config) do
-    assert(type(v) == 'number' and v > 0)
-  end
-
-  if M.config.search1 then
-    local aug = vim.api.nvim_create_augroup('NiceScrollNvim', {})
-
-    vim.api.nvim_create_autocmd('CmdlineEnter', {
-      group = aug,
-      pattern = '*',
-      callback = function()
-        local cmdtype = vim.v.event.cmdtype
-        if
-          (cmdtype == '/' or cmdtype == '?')
-          and vim.fn.bufname() ~= '[Command Line]'
-        then
-          M.prepare()
-        end
-      end,
-    })
-
-    vim.api.nvim_create_autocmd('CmdlineLeave', {
-      group = aug,
-      pattern = '*',
-      callback = function()
-        local e = vim.v.event
-        if
-          (e.cmdtype == '/' or e.cmdtype == '?')
-          and not e.abort
-          and vim.fn.bufname() ~= '[Command Line]'
-        then
-          vim.defer_fn(M.search1, 0)
-        end
-      end,
-    })
-
-    vim.api.nvim_create_autocmd('SearchWrapped', {
-      group = aug,
-      pattern = '*',
-      callback = function()
-        vim.b.nice_scroll_wrapped = true
-      end,
-    })
-  end
-end
-
 ---File line number, abusolute
 ---@class FileLineNumber
 ---@field eof fun(): number
@@ -97,33 +47,6 @@ local w = {
   end,
 }
 
-local w0_saved = nil
-function M.prepare()
-  w0_saved = vim.fn.getpos('w0')[2]
-end
-
----Chekc if the page has moved between pre and post command execution.
----'w0' refers to the file's absolute line number, which is shown at the
----top of the window.
----If the page goes down, this returns positive, if goes up, returns negative.
----When `SearchWrapped` fired, the behavior becomes opposite.
----@return number
-function M.check()
-  local w0 = vim.fn.getpos('w0')[2]
-  local c = w0 - w0_saved
-  if vim.b.nice_scroll_wrapped then
-    c = c * -1
-  end
-  vim.b.nice_scroll_wrapped = false
-  return c
-end
-
----@param n number
----@return number
-local function reverse(n)
-  return n <= 1 and 1 - n or w.last() - n
-end
-
 ---@param target number
 ---@param current number
 local function exec(target, current)
@@ -147,19 +70,20 @@ end
 ---Bring the current cursor line to 'nice' place.
 ---@param n number|'r'|nil r = reverse
 function M.fit(n)
-  n = n and n or M.config.default
+  local d = M.config.default
+  n = n and n or d
   if n == 'r' then
-    n = reverse(M.config.default)
+    n = d <= 1 and 1 - d or w.last() - d
   end
   exec(w:target(n), w.current())
 end
 
 ---Bring the current cursor line to 'nice' place, but being careful not to
 ---raise the EOF too much.
----@param n number|nil
+---@param n number|'r'|nil
 function M.fit_eof(n)
   n = n and n or M.config.default
-  if not M.config.eof then
+  if not M.config.eof or n == 'r' then
     M.fit(n)
     return
   end
@@ -176,32 +100,8 @@ function M.fit_eof(n)
   end
 end
 
----Scrolling to the 'nice' position after a directional jump like 'n' or 'N'.
----When you scroll up, it will invert the position to stop so that you can
----see where you're going to go.
----@param n number|nil
-function M.directional(n)
-  n = n and n or M.config.default
-  local c = M.check()
-  if c > 0 then
-    M.fit_eof(n)
-  end
-  if c < 0 then
-    M.fit(reverse(n))
-  end
-end
-
----Scrolling to the 'nice' position after a non-directional jump like '<C-o>' or 'g;'
----@param n number|nil
-function M.jump(n)
-  n = n and n or M.config.default
-  if M.check() ~= 0 then
-    M.fit_eof(n)
-  end
-end
-
 ---Scrolling to the 'nice' position after pressing Enter key to confirm search.
-function M.search1()
+local function search1()
   local limit = M.config.search1
   if not limit then
     return
@@ -213,6 +113,35 @@ function M.search1()
   limit = limit - 1
   if (c <= w.first() + limit) or (c >= w.last() - limit) then
     M.fit_eof()
+  end
+end
+
+---@param config NiceScroll.Config
+function M.setup(config)
+  M.config = vim.tbl_extend('force', M.config, config)
+
+  for _, v in pairs(M.config) do
+    if v then
+      assert(type(v) == 'number' and v > 0)
+    end
+  end
+
+  if M.config.search1 then
+    local aug = vim.api.nvim_create_augroup('NiceScrollNvim', {})
+    vim.api.nvim_create_autocmd('CmdlineLeave', {
+      group = aug,
+      pattern = '*',
+      callback = function()
+        local e = vim.v.event
+        if
+          (e.cmdtype == '/' or e.cmdtype == '?')
+          and not e.abort
+          and vim.fn.bufname() ~= '[Command Line]'
+        then
+          vim.defer_fn(search1, 0)
+        end
+      end,
+    })
   end
 end
 
