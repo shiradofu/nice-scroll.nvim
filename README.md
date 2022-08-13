@@ -83,9 +83,12 @@ Vim commands `NiceScrollFit` and `NiceScrollFitEof` are also available.
 #### `require('nice-scroll').hook()`
 
 You can hook into a cursor jump and execute `fit_eof()` by `hook()` function.
+
+Note: `fit_eof()` will be executed **only when the jump had the page scrolled**.
+
 This function wraps a string or a lua function that is taken as the first
 argument and returns it. This can be assigned to keymap rhs directly, so you can
-do:
+do the following:
 
 ```lua
 local ns = require('nice-scroll')
