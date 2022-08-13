@@ -62,13 +62,14 @@ kind a collegues of `zz`, `zt`, or `zb`.
 
 ```lua
 vim.keymap.set({'n', 'x' }, 'zh', "<Plug>(nice-scroll-fit)")
--- see
+
+-- Reverse version: See `hook()`'s second argument description for details.
 vim.keymap.set({'n', 'x' }, 'zl', "<Plug>(nice-scroll-fit-r)")
 
--- or eof version
--- vim.keymap.set({'n', 'x' }, 'zh', "<Plug>(nice-scroll-fit-eof)")
+-- EOF attentive version
+vim.keymap.set({'n', 'x' }, 'zh', "<Plug>(nice-scroll-fit-eof)")
 
--- or specifying poistion
+-- Specifying poistion
 -- This will bring the cursorline to 10 line below the top of the window
 vim.keymap.set({'n', 'x' }, 'zh', function() require('nice-scroll').fit(10) end)
 ```
@@ -89,10 +90,7 @@ do:
 ```lua
 local ns = require('nice-scroll')
 vim.keymap.set({ 'n', 'x' }, 'g;', ns.hook('g;'))
-vim.keymap.set({ 'n', 'x' }, 'g,', ns.hook('g,'))
-vim.keymap.set({ 'n', 'x' }, ']q', ns.hook('<Cmd>cnext<CR>'))
 vim.keymap.set({ 'n', 'x' }, '[q', ns.hook('<Cmd>cprev<CR>'))
-vim.keymap.set({ 'n', 'x' }, '[e', ns.hook(vim.diagnostic.goto_prev))
 vim.keymap.set({ 'n', 'x' }, ']e', ns.hook(vim.diagnostic.goto_next))
 ```
 
@@ -108,9 +106,16 @@ vim.keymap.set({ 'n', 'x' }, ']e', ns.hook(vim.diagnostic.goto_next))
   -- Suppose you configure the plugin to move the cursorline 10 lines below
   -- from the top of the window. With this option, cursorline will moved to
   -- 10 lines above from the bottom of the winodw.
-  -- This is useful when scrolling up continuously.
+  -- This is useful when scrolling up continuously like `N`.
   reverse = false,
 }
+```
+
+example:
+
+```lua
+vim.keymap.set({ 'n', 'x' }, 'g,', ns.hook('g,', { countable = true }))
+vim.keymap.set({ 'n', 'x' }, ']q', ns.hook('<Cmd>cnext<CR>', { countable = true }))
 ```
 
 ##### 'nice' defaults for `n` and `N`
