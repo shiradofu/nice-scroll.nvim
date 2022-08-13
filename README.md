@@ -72,6 +72,10 @@ vim.keymap.set({'n', 'x' }, 'zl', "<Plug>(nice-scroll-fit-r)")
 vim.keymap.set({'n', 'x' }, 'zh', function() require('nice-scroll').fit(10) end)
 ```
 
+#### Vim commands
+
+Vim commands `NiceScrollFit` and `NiceScrollFitEof` are also available.
+
 ### Hooking into Jumps
 
 #### `require('nice-scroll.hook').hook()`

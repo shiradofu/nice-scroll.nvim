@@ -53,8 +53,8 @@ local function exec(target, current)
   local distance = target - current
 
   -- Depending on the config.default value, executing M.fit() multiple times
-  -- results shaking the page. Usually, we don't do call M.fit twice or more
-  -- in a row, but this behavior is a bit wired.
+  -- results shaking the page. Usually, we don't call M.fit twice or more in
+  -- a row, but this behavior is a bit wired.
   -- The condition below surpress it.
   if math.abs(distance) <= 1 then
     return
@@ -67,7 +67,7 @@ local function exec(target, current)
   end
 end
 
----Bring the current cursor line to 'nice' place.
+---Bring the current cursor line to 'nice' position.
 ---@param n number|'r'|nil r = reverse
 function M.fit(n)
   local d = M.config.default
@@ -78,7 +78,7 @@ function M.fit(n)
   exec(w:target(n), w.current())
 end
 
----Bring the current cursor line to 'nice' place, but being careful not to
+---Bring the current cursor line to 'nice' position, but being careful not to
 ---raise the EOF too much.
 ---@param n number|'r'|nil
 function M.fit_eof(n)
@@ -100,7 +100,7 @@ function M.fit_eof(n)
   end
 end
 
----Scrolling to the 'nice' position after pressing Enter key to confirm search.
+---Scrolling to the 'nice' position on search submitting.
 local function search1()
   local limit = M.config.search1
   if not limit then
