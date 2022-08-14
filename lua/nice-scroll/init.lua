@@ -122,7 +122,7 @@ end
 --                --
 --------------------
 local w0_saved = nil
-function M._hook_prepare()
+local function hook_prepare()
   w0_saved = vim.fn.getpos('w0')[2]
 end
 
@@ -133,85 +133,66 @@ local function check()
 end
 
 ---@param n number|'r'|nil
-function M._hook_jump(n)
+local function hook_jump(n)
   if check() then
     M.adjust_eof(n)
   end
 end
 
----@param fn function
----@param reverse boolean
-local function wrap_fn(fn, reverse)
-  return function()
-    M._hook_prepare()
-    fn()
-    M._hook_jump(reverse and 'r' or nil)
-  end
-end
-
----@param str string
----@param reverse boolean
----@param countable boolean
-local function wrap_str(str, reverse, countable)
-  local rhs = str
-  if countable then
-    if str:find '<[Cc][Mm][Dd]>' then
-      local last = str:find '<[Cc][Rr]>' - 1
-      rhs = ("<Cmd>exe b:count1 . '%s'<CR>"):format(str:sub(#'<Cmd>' + 1, last))
-    else
-      rhs = ("<Cmd>exe 'normal! ' . b:count1 . '%s'<CR>"):format(str)
-    end
-  end
-
-  rhs = "<Cmd>lua require('nice-scroll')._hook_prepare()<CR>"
-    .. rhs
-    .. ("<Cmd>lua require('nice-scroll')._hook_jump(%s)<CR>"):format(
-      reverse and "'r'" or ''
-    )
-
-  if countable then
-    rhs = '<Cmd>let b:count1 = v:count1<CR>'
-      .. rhs
-      .. '<Cmd>silent! unlet b:count1<CR>'
-  end
-
-  return rhs
-end
-
 ---@class NiceScrollHook.Options
+---@field debug boolean
 ---@field reverse boolean
 ---@field countable boolean
 ---@field hlslens boolean
 
----@param rhs string
----@param opts NiceScrollHook.Options
----@return string
-local function handle_options_str(rhs, opts)
-  if opts.hlslens and vim.g.loaded_nvim_hlslens == 1 then
-    rhs = rhs .. "<Cmd>lua require('hlslens').start()<CR>"
-  end
-  return rhs
-end
-
----@param wrapped string|function
+---@param hooked string|function
 ---@param opts NiceScrollHook.Options|nil
-function M.hook(wrapped, opts)
+function M.hook(hooked, opts)
   -- Nice default for 'n' and 'N'
-  if (wrapped == 'n' or wrapped == 'N') and not opts then
+  if (hooked == 'n' or hooked == 'N') and not opts then
     opts = { countable = true, hlslens = true }
-    if wrapped == 'N' then
+    if hooked == 'N' then
       opts.reverse = true
     end
   end
-
   opts = opts or {}
 
-  if type(wrapped) == 'function' then
-    return wrap_fn(wrapped, opts.reverse)
+  hook_prepare()
+  if type(hooked) == 'function' then
+    hooked()
   end
-  if type(wrapped) == 'string' then
-    local rhs = wrap_str(wrapped, opts.reverse, opts.countable)
-    return handle_options_str(rhs, opts)
+  if type(hooked) == 'string' then
+    if opts.countable then
+      local count1 = tostring(vim.v.count1)
+      if hooked:find '%%d' then
+        hooked = hooked:format(count1)
+      else
+        if hooked:find '<[Cc][Mm][Dd]>' == 1 then
+          hooked = hooked:sub(1, 5) .. count1 .. hooked:sub(6, -1)
+        elseif hooked:find ':<[Cc]-[Uu]>' == 1 then
+          hooked = hooked:sub(1, 6) .. count1 .. hooked:sub(7, -1)
+        elseif hooked:find ':' == 1 then
+          hooked = hooked:sub(1, 1) .. count1 .. hooked:sub(2, -1)
+        else
+          hooked = count1 .. hooked
+        end
+      end
+    end
+    hooked = hooked:gsub('<', [[\<]]):gsub('"', [[\"]])
+    local cmd = string.format('execute "normal! %s"', hooked)
+    if opts.debug then
+      vim.api.nvim_echo({ { cmd, 'None' } }, true, {})
+    end
+    local ok, err =
+      pcall(vim.cmd, string.format('execute "normal! %s"', hooked))
+    if not ok then
+      vim.api.nvim_echo({ { err, 'ErrorMsg' } }, true, {})
+    end
+  end
+  hook_jump(opts.reverse and 'r' or nil)
+
+  if opts.hlslens and vim.g.loaded_nvim_hlslens == 1 then
+    require('hlslens').start()
   end
 end
 

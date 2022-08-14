@@ -8,7 +8,8 @@
 
 https://user-images.githubusercontent.com/43514606/184519525-0cbe7619-b4cf-4c9e-89fe-dd99884b7a92.mov
 
-This is an alpha stage plugin, so it still might not be so 'nice'.
+This is an alpha stage plugin, so it still might not be so 'nice'. Public API
+may be changed.
 
 ## ✊ Motivation
 
@@ -55,7 +56,7 @@ of the file would be quite small. To prevent this, `adjust_eof()` pays attention
 to the EOF and adjust the scroll. By default, it will keep the EOF out of the
 3/4 range of the window.
 
-#### keymaps
+#### keymap examples
 
 You can set keymaps like this and manually adjust the scroll position. These are
 kind a collegues of `zz`, `zt`, or `zb`.
@@ -82,29 +83,19 @@ Vim commands `NiceScrollAdjust` and `NiceScrollAdjust` are also available.
 
 #### `require('nice-scroll').hook()`
 
-You can hook into a cursor jump and execute `adjust_eof()` by `hook()` function.
+`hook()` function allows you to hook into a cursor jump and execute
+`adjust_eof()`. `hook()` takes 2 araguments: `hooked` and `opts`. If the type of
+`hooked` is string, it will passed to `vim.cmd('execute "normal! %s"')` after
+properly escaped. If it is function, it will run directly.
 
-Note: `adjust_eof()` will be executed **only when the jump had the page
-scrolled**.
-
-This function wraps a string or a lua function that is taken as the first
-argument and returns it. This can be assigned to keymap rhs directly, so you can
-do the following:
+`opts` is a table whose keys and default values are the followings:
 
 ```lua
-local ns = require('nice-scroll')
-vim.keymap.set({ 'n', 'x' }, 'g;', ns.hook('g;'))
-vim.keymap.set({ 'n', 'x' }, '[q', ns.hook('<Cmd>cprev<CR>'))
-vim.keymap.set({ 'n', 'x' }, ']e', ns.hook(vim.diagnostic.goto_next))
-```
-
-`hook()` takes the optional second argument, and it contains:
-
-```lua
--- default values
 {
   -- If true, mappings using v:count1 like 3g; can be used.
-  -- This has effect only on string mappings.
+  -- This has effect only when `hooked` is a string.
+  -- For most simple rhs, `hook()` automatically add v:count1, but you can
+  -- also include '%d' in `hooked` and specify where to put it.
   countable = false,
   -- If true, the position where the cursorline will be moved is inverted.
   -- Suppose you configure the plugin to move the cursorline 10 lines below
@@ -112,14 +103,28 @@ vim.keymap.set({ 'n', 'x' }, ']e', ns.hook(vim.diagnostic.goto_next))
   -- 10 lines above from the bottom of the winodw.
   -- This is useful when scrolling up continuously like `N`.
   reverse = false,
+
+  -- Available only when `hooked` is string.
+  -- print a string that is passed to vim.cmd.
+  debug = false,
 }
 ```
 
-example:
+Note: `adjust_eof()` will be executed **only when the jump had the page
+scrolled**.
+
+#### keymap examples
 
 ```lua
-vim.keymap.set({ 'n', 'x' }, 'g,', ns.hook('g,', { countable = true }))
-vim.keymap.set({ 'n', 'x' }, ']q', ns.hook('<Cmd>cnext<CR>', { countable = true }))
+vim.keymap.set({ 'n', 'x' }, 'g;', function()
+  require('nice-scroll').hook('g;', { countable = true })
+end)
+vim.keymap.set({ 'n', 'x' }, '[q', function()
+  require('nice-scroll').hook('<Cmd>cprev<CR>', { countable = true, reverse = true })
+end)
+vim.keymap.set({ 'n', 'x' }, ']e', function()
+  require('nice-scroll').hook(vim.diagnostic.goto_next)
+end)
 ```
 
 ##### 'nice' defaults for `n` and `N`
@@ -138,7 +143,7 @@ set to the options.
 ### Scroll on Search
 
 If `search1` property of the configuration table is set, and the cursorline is
-in specified range, `adjust_eof()` will be executed on submitting search.
+in the specified range, `adjust_eof()` will be executed on submitting search.
 
 ## 💪 Configuration
 
@@ -161,7 +166,7 @@ require('nice-scroll').setup {
 
   -- Distance from the both end of the window:
   -- If cursorline is in this range when pressing <CR> in search, `adjust_eof()`
-  -- will be executed.
+  -- will be executed. When nil, scroll on search is disabled.
   search1 = 1,
 }
 ```
@@ -173,20 +178,22 @@ argument of the `hook()` function.
 
 ### [nvim-hlslens](https://github.com/kevinhwang91/nvim-hlslens/)
 
-By specifying `{ hlslens = true }` as the option you can enable integration. But
-it's alreadly included into the 'nice' default for `n` and `N`! So you don't
-have to do it manually. (If nvim-hlslens is not installed, it is just ignored.)
+By specifying `{ hlslens = true }` you can enable hlslens integration. But it's
+alreadly included into the 'nice' default for `n` and `N`! So you don't have to
+do it manually. (If nvim-hlslens is not installed, it is just ignored.)
 
 ```lua
 -- This is perfect.
--- Ensure vim.g.loaded_nvim_hlslens == 1 before these are loaded.
-local ns = require('nice-scroll')
-vim.keymap.set({ 'n', 'x' }, 'n', ns.hook('n'))
-vim.keymap.set({ 'n', 'x' }, 'N', ns.hook('N'))
+-- Ensure vim.g.loaded_nvim_hlslens == 1.
+vim.keymap.set({ 'n', 'x' }, 'n', function() require('nice-scroll').hook('n') end)
+vim.keymap.set({ 'n', 'x' }, 'N', function() require('nice-scroll').hook('N') end)
 ```
 
 ## 🙏 Credits
 
-I learned a lot from
-[nvim-hlslens](https://github.com/kevinhwang91/nvim-hlslens/), thank you! This
-is definitely awesome plugin, plese check it out!
+- I learned a lot from
+  [nvim-hlslens](https://github.com/kevinhwang91/nvim-hlslens/), thank you! This
+  is definitely awesome plugin, plese check it out!
+- In the introduction video above, I use
+  [Rosé Pine Moon](https://github.com/rose-pine/neovim). It's one of my
+  favorites.
