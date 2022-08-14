@@ -6,9 +6,7 @@
   Happiness begins with a comfortable scroll.
 </p>
 
-
-https://user-images.githubusercontent.com/43514606/184506356-3f41c2a0-260b-46ad-bd70-1af3298db9b6.mov
-
+https://user-images.githubusercontent.com/43514606/184519525-0cbe7619-b4cf-4c9e-89fe-dd99884b7a92.mov
 
 This is an alpha stage plugin, so it still might not be so 'nice'.
 
