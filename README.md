@@ -43,17 +43,17 @@ key mappings.
 
 ### Base Functions
 
-#### `require('nice-scroll').fit()`
+#### `require('nice-scroll').adjust()`
 
-`fit()` brings current line to the 'nice' position (default is the quarter of
+`adjust()` brings current line to the 'nice' position (default is the quarter of
 the window from the top of it).
 
-#### `require('nice-scroll').fit_eof()`
+#### `require('nice-scroll').adjust_eof()`
 
-If you execute `fit()` near the EOF, it raises too much and the visible range of
-the file would be quite small. To prevent this, `fit_eof()` pays attention to
-the EOF and adjust the scroll. By default, it will keep the EOF out of the 3/4
-range of the window.
+If you execute `adjust()` near the EOF, it raises too much and the visible range
+of the file would be quite small. To prevent this, `adjust_eof()` pays attention
+to the EOF and adjust the scroll. By default, it will keep the EOF out of the
+3/4 range of the window.
 
 #### keymaps
 
@@ -61,30 +61,31 @@ You can set keymaps like this and manually adjust the scroll position. These are
 kind a collegues of `zz`, `zt`, or `zb`.
 
 ```lua
-vim.keymap.set({'n', 'x' }, 'zh', "<Plug>(nice-scroll-fit)")
+vim.keymap.set({'n', 'x' }, 'zh', "<Plug>(nice-scroll-adjust)")
 
 -- Reverse version: See `hook()`'s second argument description for details.
-vim.keymap.set({'n', 'x' }, 'zl', "<Plug>(nice-scroll-fit-r)")
+vim.keymap.set({'n', 'x' }, 'zl', "<Plug>(nice-scroll-adjust-r)")
 
 -- EOF attentive version
-vim.keymap.set({'n', 'x' }, 'zh', "<Plug>(nice-scroll-fit-eof)")
+vim.keymap.set({'n', 'x' }, 'zh', "<Plug>(nice-scroll-adjust-eof)")
 
 -- Specifying poistion
 -- This will bring the cursorline to 10 line below the top of the window
-vim.keymap.set({'n', 'x' }, 'zh', function() require('nice-scroll').fit(10) end)
+vim.keymap.set({'n', 'x' }, 'zh', function() require('nice-scroll').adjust(10) end)
 ```
 
 #### Vim commands
 
-Vim commands `NiceScrollFit` and `NiceScrollFitEof` are also available.
+Vim commands `NiceScrollAdjust` and `NiceScrollAdjust` are also available.
 
 ### Hooking into Jumps
 
 #### `require('nice-scroll').hook()`
 
-You can hook into a cursor jump and execute `fit_eof()` by `hook()` function.
+You can hook into a cursor jump and execute `adjust_eof()` by `hook()` function.
 
-Note: `fit_eof()` will be executed **only when the jump had the page scrolled**.
+Note: `adjust_eof()` will be executed **only when the jump had the page
+scrolled**.
 
 This function wraps a string or a lua function that is taken as the first
 argument and returns it. This can be assigned to keymap rhs directly, so you can
@@ -137,7 +138,7 @@ set to the options.
 ### Scroll on Search
 
 If `search1` property of the configuration table is set, and the cursorline is
-in specified range, `fit_eof()` will be executed on submitting search.
+in specified range, `adjust_eof()` will be executed on submitting search.
 
 ## 💪 Configuration
 
@@ -150,16 +151,16 @@ The values below are default.
 require('nice-scroll').setup {
 
   -- Distance from the top end of the window:
-  -- `fit()` will move the cursorline to this position.
+  -- `adjust()` will move the cursorline to this position.
   default = 0.25,
 
   -- Distance from the top end of the window:
-  -- `fit_eof()` keep the EOF out of this range.
-  -- If nil is set, `fit_eof()` always executes `fit()`.
+  -- `adjust_eof()` keep the EOF out of this range.
+  -- If nil is set, `adjust_eof()` always executes `adjust()`.
   eof = 0.75,
 
   -- Distance from the both end of the window:
-  -- If cursorline is in this range when pressing <CR> in search, `fit_eof()`
+  -- If cursorline is in this range when pressing <CR> in search, `adjust_eof()`
   -- will be executed.
   search1 = 1,
 }

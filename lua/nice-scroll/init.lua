@@ -52,8 +52,8 @@ local w = {
 local function exec(target, current)
   local distance = target - current
 
-  -- Depending on the config.default value, executing M.fit() multiple times
-  -- results shaking the page. Usually, we don't call M.fit twice or more in
+  -- Depending on the config.default value, executing M.adjust() multiple times
+  -- results shaking the page. Usually, we don't call M.adjust twice or more in
   -- a row, but this behavior is a bit wired.
   -- The condition below surpress it.
   if math.abs(distance) <= 1 then
@@ -69,7 +69,7 @@ end
 
 ---Bring the current cursor line to 'nice' position.
 ---@param n number|'r'|nil r = reverse
-function M.fit(n)
+function M.adjust(n)
   local d = M.config.default
   n = n and n or d
   if n == 'r' then
@@ -81,14 +81,14 @@ end
 ---Bring the current cursor line to 'nice' position, but being careful not to
 ---raise the EOF too much.
 ---@param n number|'r'|nil
-function M.fit_eof(n)
+function M.adjust_eof(n)
   n = n and n or M.config.default
   if not M.config.eof or n == 'r' then
-    M.fit(n)
+    M.adjust(n)
     return
   end
   local distance_from_current_to_eof = f.eof() - f.current()
-  -- If M.fit(n) would be executed, window line number of EOF is set to `_eof`.
+  -- If M.adjust(n) would be executed, window line number of EOF is set to `_eof`.
   local _eof = w:target(n) + distance_from_current_to_eof
   local eof_target = w:target(M.config.eof)
   -- This is a line number comparison, so if it's smaller, it's over the limit.
@@ -96,7 +96,7 @@ function M.fit_eof(n)
     local eof_current = w.current() + distance_from_current_to_eof
     exec(eof_target, eof_current)
   else
-    M.fit(n)
+    M.adjust(n)
   end
 end
 
@@ -112,7 +112,7 @@ local function search1()
   local c = w.current()
   limit = limit - 1
   if (c <= w.first() + limit) or (c >= w.last() - limit) then
-    M.fit_eof()
+    M.adjust_eof()
   end
 end
 
@@ -135,7 +135,7 @@ end
 ---@param n number|'r'|nil
 function M._hook_jump(n)
   if check() then
-    M.fit_eof(n)
+    M.adjust_eof(n)
   end
 end
 
