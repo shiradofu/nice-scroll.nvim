@@ -1,5 +1,5 @@
 <p align="center">
-  <h1 align="center">👍 nice-scroll.nvim</h2>
+  <h1 align="center">👍 nice-scroll.nvim</h1>
 </p>
 
 <p align="center">
