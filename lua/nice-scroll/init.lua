@@ -17,12 +17,8 @@ M.config = {
 ---@field eof fun(): number
 ---@field current fun(): number
 local f = {
-  eof = function()
-    return vim.api.nvim_buf_line_count(0)
-  end,
-  current = function()
-    return vim.api.nvim_win_get_cursor(0)[1]
-  end,
+  eof = function() return vim.api.nvim_buf_line_count(0) end,
+  current = function() return vim.api.nvim_win_get_cursor(0)[1] end,
 }
 
 ---Window line number, relative to the top of the window
@@ -32,15 +28,9 @@ local f = {
 ---@field current fun(): number
 ---@field target fun(self: WindowLineNumber, n: number): number
 local w = {
-  first = function()
-    return 1
-  end,
-  last = function()
-    return vim.api.nvim_win_get_height(0)
-  end,
-  current = function()
-    return vim.fn.winline()
-  end,
+  first = function() return 1 end,
+  last = function() return vim.api.nvim_win_get_height(0) end,
+  current = function() return vim.fn.winline() end,
   target = function(self, n)
     assert(type(n) == 'number' and n > 0)
     return n <= 1 and math.floor(self.last() * n) or n
@@ -56,9 +46,7 @@ local function exec(target, current)
   -- results shaking the page. Usually, we don't call M.adjust twice or more in
   -- a row, but this behavior is a bit wired.
   -- The condition below surpress it.
-  if math.abs(distance) <= 1 then
-    return
-  end
+  if math.abs(distance) <= 1 then return end
 
   if distance < 0 then
     vim.cmd(([[exe "normal! %d\<C-e>"]]):format(math.abs(distance)))
@@ -72,9 +60,7 @@ end
 function M.adjust(n)
   local d = M.config.default
   n = n and n or d
-  if n == 'r' then
-    n = d <= 1 and 1 - d or w.last() - d
-  end
+  if n == 'r' then n = d <= 1 and 1 - d or w.last() - d end
   exec(w:target(n), w.current())
 end
 
@@ -103,17 +89,11 @@ end
 ---Scrolling to the 'nice' position on search submitting.
 local function search1()
   local limit = M.config.search1
-  if not limit then
-    return
-  end
-  if limit < 1 then
-    limit = math.floor(w.last() * limit)
-  end
+  if not limit then return end
+  if limit < 1 then limit = math.floor(w.last() * limit) end
   local c = w.current()
   limit = limit - 1
-  if (c <= w.first() + limit) or (c >= w.last() - limit) then
-    M.adjust_eof()
-  end
+  if (c <= w.first() + limit) or (c >= w.last() - limit) then M.adjust_eof() end
 end
 
 --------------------
@@ -122,21 +102,15 @@ end
 --                --
 --------------------
 local w0_saved = nil
-local function hook_prepare()
-  w0_saved = vim.fn.getpos('w0')[2]
-end
+local function hook_prepare() w0_saved = vim.fn.getpos('w0')[2] end
 
 ---Chekc if the page has scrolled between pre and post jump.
 ---@return boolean
-local function check()
-  return vim.fn.getpos('w0')[2] ~= w0_saved
-end
+local function check() return vim.fn.getpos('w0')[2] ~= w0_saved end
 
 ---@param n number|'r'|nil
 local function hook_jump(n)
-  if check() then
-    M.adjust_eof(n)
-  end
+  if check() then M.adjust_eof(n) end
 end
 
 ---@class NiceScrollHook.Options
@@ -151,16 +125,12 @@ function M.hook(hooked, opts)
   -- Nice default for 'n' and 'N'
   if (hooked == 'n' or hooked == 'N') and not opts then
     opts = { countable = true, hlslens = true }
-    if hooked == 'N' then
-      opts.reverse = true
-    end
+    if hooked == 'N' then opts.reverse = true end
   end
   opts = opts or {}
 
   hook_prepare()
-  if type(hooked) == 'function' then
-    hooked()
-  end
+  if type(hooked) == 'function' then hooked() end
   if type(hooked) == 'string' then
     if opts.countable then
       local count1 = tostring(vim.v.count1)
@@ -180,14 +150,10 @@ function M.hook(hooked, opts)
     end
     hooked = hooked:gsub('<', [[\<]]):gsub('"', [[\"]])
     local cmd = string.format('execute "normal! %s"', hooked)
-    if opts.debug then
-      vim.api.nvim_echo({ { cmd, 'None' } }, true, {})
-    end
+    if opts.debug then vim.api.nvim_echo({ { cmd, 'None' } }, true, {}) end
     local ok, err =
       pcall(vim.cmd, string.format('execute "normal! %s"', hooked))
-    if not ok then
-      vim.api.nvim_echo({ { err, 'ErrorMsg' } }, true, {})
-    end
+    if not ok then vim.api.nvim_echo({ { err, 'ErrorMsg' } }, true, {}) end
   end
   hook_jump(opts.reverse and 'r' or nil)
 
@@ -201,9 +167,7 @@ function M.setup(config)
   M.config = vim.tbl_extend('force', M.config, config)
 
   for _, v in pairs(M.config) do
-    if v then
-      assert(type(v) == 'number' and v > 0)
-    end
+    if v then assert(type(v) == 'number' and v > 0) end
   end
 
   if M.config.search1 then
