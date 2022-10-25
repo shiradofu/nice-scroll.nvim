@@ -8,8 +8,8 @@
 
 https://user-images.githubusercontent.com/43514606/184519525-0cbe7619-b4cf-4c9e-89fe-dd99884b7a92.mov
 
-This is an alpha stage plugin, so it still might not be so 'nice'. Public API
-may be changed.
+This is an alpha stage plugin, so it still may not be so 'nice'. Public API
+might be changed.
 
 ## ✊ Motivation
 
@@ -18,7 +18,7 @@ to follow the cursor. It's hopping and skipping around the editor like an
 innocent child. That's fine for a child, but not so for a cursor.
 
 This plugin can hook into cursor jumps and scroll the page to bring it where it
-is easy to see. This could be applied to traversing search resutls by `n`/`N` ,
+is easy to see. This could be applied to traversing search results by `n`/`N` ,
 jumps with like `<C-o>`,`g;` or lua functions such as
 `vim.diagnostic.goto_next`, and even the `<CR>` in the search from the cmdline!
 
@@ -39,22 +39,22 @@ use {
 
 ## ✌️ Usage
 
-Note: The configs below are just examples. This plugins does not provide default
+Note: The configs below are just examples. This plugin does not provide default
 key mappings.
 
 ### Base Functions
 
 #### `require('nice-scroll').adjust()`
 
-`adjust()` brings current line to the 'nice' position (default is the quarter of
-the window from the top of it).
+`adjust()` brings the current line to the 'nice' position (default is the
+quarter of the window from the top of it).
 
 #### `require('nice-scroll').adjust_eof()`
 
 If you execute `adjust()` near the EOF, it raises too much and the visible range
 of the file would be quite small. To prevent this, `adjust_eof()` pays attention
-to the EOF and adjust the scroll. By default, it will keep the EOF out of the
-3/4 range of the window.
+to the EOF and adjusts the scroll. By default, it keeps the EOF out of the 3/4
+range of the window.
 
 #### keymap examples
 
@@ -99,12 +99,12 @@ properly escaped. If it is function, it will run directly.
   countable = false,
   -- If true, the position where the cursorline will be moved is inverted.
   -- Suppose you configure the plugin to move the cursorline 10 lines below
-  -- from the top of the window. With this option, cursorline will moved to
-  -- 10 lines above from the bottom of the winodw.
+  -- from the top of the window. With this option, the cursorline will be moved
+  -- to 10 lines above from the bottom of the window.
   -- This is useful when scrolling up continuously like `N`.
   reverse = false,
 
-  -- Available only when `hooked` is string.
+  -- Available only when `hooked` is a string.
   -- print a string that is passed to vim.cmd.
   debug = false,
 }
@@ -129,8 +129,8 @@ end)
 
 ##### 'nice' defaults for `n` and `N`
 
-Hooking into `n` and `N` are quite usual usecases, so the following defaults are
-set to the options.
+Hooking into `n` and `N` are quite usual use cases, so the following defaults
+are set to the options.
 
 ```lua
 -- for `n`
@@ -142,17 +142,18 @@ set to the options.
 
 ### Scroll on Search
 
-If `search1` property of the configuration table is set, and the cursorline is
-in the specified range, `adjust_eof()` will be executed on submitting search.
+If the `search1` property of the configuration table is set, and the cursorline
+is in the specified range, `adjust_eof()` will be executed on submitting a
+search.
 
 ## 💪 Configuration
 
 The values below are default.
 
 ```lua
--- All options accepts positive numbers.
--- n >= 1: n is considered as fixed number of lines.
--- n < 1: n is considered as ratio against the current window height.
+-- All options accept positive numbers.
+-- n >= 1: n is considered as a fixed number of lines.
+-- n < 1: n is considered as the ratio against the current window height.
 require('nice-scroll').setup {
 
   -- Distance from the top end of the window:
@@ -164,7 +165,7 @@ require('nice-scroll').setup {
   -- If nil is set, `adjust_eof()` always executes `adjust()`.
   eof = 0.75,
 
-  -- Distance from the both end of the window:
+  -- Distance from both ends of the window:
   -- If cursorline is in this range when pressing <CR> in search, `adjust_eof()`
   -- will be executed. When nil, scroll on search is disabled.
   search1 = 1,
@@ -179,8 +180,8 @@ argument of the `hook()` function.
 ### [nvim-hlslens](https://github.com/kevinhwang91/nvim-hlslens/)
 
 By specifying `{ hlslens = true }` you can enable hlslens integration. But it's
-alreadly included into the 'nice' default for `n` and `N`! So you don't have to
-do it manually. (If nvim-hlslens is not installed, it is just ignored.)
+already included in the 'nice' default for `n` and `N`! So you don't have to do
+it manually. (If nvim-hlslens is not installed, it is just ignored.)
 
 ```lua
 -- This is perfect.
@@ -193,7 +194,7 @@ vim.keymap.set({ 'n', 'x' }, 'N', function() require('nice-scroll').hook('N') en
 
 - I learned a lot from
   [nvim-hlslens](https://github.com/kevinhwang91/nvim-hlslens/), thank you! This
-  is definitely awesome plugin, plese check it out!
+  is a definitely awesome plugin, please check it out!
 - In the introduction video above, I use
   [Rosé Pine Moon](https://github.com/rose-pine/neovim). It's one of my
   favorites.
