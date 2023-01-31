@@ -19,8 +19,9 @@ innocent child. That's fine for a child, but not so for a cursor.
 
 This plugin can hook into cursor jumps and scroll the page to bring it where it
 is easy to see. This could be applied to traversing search results by `n`/`N` ,
-jumps with like `<C-o>`,`g;` or lua functions such as
-`vim.diagnostic.goto_next`, and even the `<CR>` in the search from the cmdline!
+jumps with like `<C-o>`,`g;` or lua functions such as `vim.lsp.buf.definition`
+or `vim.diagnostic.goto_next`, and even the `<CR>` in the search from the
+cmdline!
 
 ## 👋 installation
 
@@ -42,7 +43,7 @@ use {
 Note: The configs below are just examples. This plugin does not provide default
 key mappings.
 
-### Base Functions
+### Basic Features
 
 #### `require('nice-scroll').adjust()`
 
@@ -81,12 +82,13 @@ Vim commands `NiceScrollAdjust` and `NiceScrollAdjust` are also available.
 
 ### Hooking into Jumps
 
-#### `require('nice-scroll').hook()`
+#### `require('nice-scroll').hook()/hook_async()`
 
-`hook()` function allows you to hook into a cursor jump and execute
-`adjust_eof()`. `hook()` takes 2 araguments: `hooked` and `opts`. If the type of
-`hooked` is string, it will passed to `vim.cmd('execute "normal! %s"')` after
-properly escaped. If it is function, it will run directly.
+`hook()` and `hook_async()` functions allow you to hook into a cursor jump and
+execute `adjust_eof()`. These take 2 araguments: `hooked` and `opts`. If the
+type of `hooked` is string, it will passed to `vim.cmd('execute "normal! %s"')`
+after properly escaped. If it is function, it will run directly. Please use
+`hook_async()` for async functions, like `vim.lsp.buf.definition`.
 
 `opts` is a table whose keys and default values are the followings:
 
@@ -104,26 +106,41 @@ properly escaped. If it is function, it will run directly.
   -- This is useful when scrolling up continuously like `N`.
   reverse = false,
 
+  -- Only for hook_async():
+  -- Async version uses autocmds like `CursorMoved` or `WinScrolled`. If
+  -- 'hooked` does nothing, cursor doesn`t move and win never scrolls, which let
+  -- the autocmds linger. To deal with this, after the time specified here
+  -- elapsed, autocmds are cleared.
+  timeout_ms = 1000,
+
   -- Available only when `hooked` is a string.
-  -- print a string that is passed to vim.cmd.
+  -- print a string that is passed to `vim.cmd`.
   debug = false,
 }
 ```
 
 Note: `adjust_eof()` will be executed **only when the jump had the page
-scrolled**.
+scrolled, or the current buffer changed**.
 
 #### keymap examples
 
 ```lua
+-- sync
 vim.keymap.set({ 'n', 'x' }, 'g;', function()
   require('nice-scroll').hook('g;', { countable = true })
 end)
+
 vim.keymap.set({ 'n', 'x' }, '[q', function()
   require('nice-scroll').hook('<Cmd>cprev<CR>', { countable = true, reverse = true })
 end)
+
+-- async
+vim.keymap.set('n', 'gd', function()
+  require('nice-scroll').hook_async(vim.lsp.buf.definition)
+end)
+
 vim.keymap.set({ 'n', 'x' }, ']e', function()
-  require('nice-scroll').hook(vim.diagnostic.goto_next)
+  require('nice-scroll').hook_async(vim.diagnostic.goto_next, { timeout = 2000 })
 end)
 ```
 
@@ -181,7 +198,7 @@ argument of the `hook()` function.
 
 By specifying `{ hlslens = true }` you can enable hlslens integration. But it's
 already included in the 'nice' default for `n` and `N`! So you don't have to do
-it manually. (If nvim-hlslens is not installed, it is just ignored.)
+it manually. (If nvim-hlslens is not installed, it's just ignored.)
 
 ```lua
 -- This is perfect.
