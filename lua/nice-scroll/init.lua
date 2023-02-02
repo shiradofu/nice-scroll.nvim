@@ -61,7 +61,12 @@ function M.adjust(n)
   local d = M.config.default
   n = n and n or d
   if n == 'r' then n = d <= 1 and 1 - d or w.last() - d end
-  exec(w:target(n), w.current())
+  exec(
+    w:target(
+      n --[[@as number]]
+    ),
+    w.current()
+  )
 end
 
 ---Bring the current cursor line to 'nice' position, but being careful not to
@@ -75,7 +80,9 @@ function M.adjust_eof(n)
   end
   local distance_from_current_to_eof = f.eof() - f.current()
   -- If M.adjust(n) would be executed, window line number of EOF is set to `_eof`.
-  local _eof = w:target(n) + distance_from_current_to_eof
+  local _eof = w:target(
+    n --[[@as number]]
+  ) + distance_from_current_to_eof
   local eof_target = w:target(M.config.eof)
   -- This is a line number comparison, so if it's smaller, it's over the limit.
   if _eof < eof_target then
@@ -101,36 +108,103 @@ end
 -- hook functions --
 --                --
 --------------------
-local w0_saved = nil
-local function hook_prepare() w0_saved = vim.fn.getpos('w0')[2] end
-
----Chekc if the page has scrolled between pre and post jump.
----@return boolean
-local function check() return vim.fn.getpos('w0')[2] ~= w0_saved end
-
----@param n number|'r'|nil
-local function hook_jump(n)
-  if check() then M.adjust_eof(n) end
-end
-
 ---@class NiceScrollHook.Options
----@field debug boolean
 ---@field reverse boolean
 ---@field countable boolean
+---@field debug boolean
 ---@field hlslens boolean
 
----@param hooked string|function
----@param opts NiceScrollHook.Options|nil
-function M.hook(hooked, opts)
-  -- Nice default for 'n' and 'N'
-  if (hooked == 'n' or hooked == 'N') and not opts then
-    opts = { countable = true, hlslens = true }
-    if hooked == 'N' then opts.reverse = true end
-  end
-  opts = opts or {}
+---@class NiceScrollHook.AsyncOptions
+---@field timeout number
+---@field reverse boolean
+---@field countable boolean
+---@field debug boolean
 
-  hook_prepare()
-  if type(hooked) == 'function' then hooked() end
+local H = {}
+
+H.w0_saved = nil
+H.bufnr_saved = nil
+H.default_timeout = 1000000
+
+---@generic T : NiceScrollHook.Options|NiceScrollHook.AsyncOptions
+---@param hooked string|function
+---@param opts T|nil
+---@return T
+function H.prepare_opts(hooked, opts)
+  -- Nice default for 'n' and 'N'
+  if hooked == 'n' or hooked == 'N' then
+    opts = vim.tbl_extend('keep', opts, { countable = true, hlslens = true })
+    if hooked == 'N' then
+      opts = vim.tbl_extend('keep', opts, { reverse = true })
+    end
+  end
+  return opts
+end
+
+function H.save_current_pos()
+  H.w0_saved = vim.fn.getpos('w0')[2]
+  H.bufnr_saved = vim.api.nvim_get_current_buf()
+end
+
+---@param win_id number
+local function is_floating_win(win_id)
+  return vim.api.nvim_win_get_config(win_id).relative ~= ''
+end
+
+---@param opts NiceScrollHook.AsyncOptions
+function H.prepare_async(opts)
+  local cursor_moved =
+    vim.api.nvim_create_augroup('NiceScrollHookCursorMoved', {})
+  local timer = vim.defer_fn(
+    function() vim.api.nvim_clear_autocmds { group = cursor_moved } end,
+    opts.timeout or H.default_timeout
+  )
+  vim.api.nvim_create_autocmd('CursorMoved', {
+    once = true,
+    group = cursor_moved,
+    callback = function()
+      if is_floating_win(vim.api.nvim_get_current_win()) then
+        timer:stop()
+        timer:close()
+        local win_enter =
+          vim.api.nvim_create_augroup('NiceScrollHookWinEnter', {})
+        -- fires after leaving the floating window and entering normal window
+        vim.api.nvim_create_autocmd('WinEnter', {
+          once = true,
+          group = win_enter,
+          callback = function()
+            -- fires right after upper 'WinEnter' fired
+            vim.api.nvim_create_autocmd('CursorMoved', {
+              once = true,
+              group = cursor_moved,
+              callback = function()
+                vim.defer_fn(
+                  function() vim.api.nvim_clear_autocmds { group = cursor_moved } end,
+                  100
+                )
+                -- this is the main purpose: adjust the current line p
+                vim.api.nvim_create_autocmd({ 'CursorMoved', 'WinScrolled' }, {
+                  once = true,
+                  group = cursor_moved,
+                  callback = function() H.jump(opts) end,
+                })
+              end,
+            })
+          end,
+        })
+      else
+        H.jump(opts)
+      end
+    end,
+  })
+end
+
+---@param hooked string|function
+---@param opts NiceScrollHook.Options|NiceScrollHook.AsyncOptions
+---@return any
+function H.do_hooked(hooked, opts)
+  local ret = nil
+  if type(hooked) == 'function' then ret = hooked() end
   if type(hooked) == 'string' then
     if opts.countable then
       local count1 = tostring(vim.v.count1)
@@ -139,7 +213,7 @@ function M.hook(hooked, opts)
       else
         if hooked:find '<[Cc][Mm][Dd]>' == 1 then
           hooked = hooked:sub(1, 5) .. count1 .. hooked:sub(6, -1)
-        elseif hooked:find ':<[Cc]-[Uu]>' == 1 then
+        elseif hooked:find ':<[Cc]%-[Uu]>' == 1 then
           hooked = hooked:sub(1, 6) .. count1 .. hooked:sub(7, -1)
         elseif hooked:find ':' == 1 then
           hooked = hooked:sub(1, 1) .. count1 .. hooked:sub(2, -1)
@@ -155,11 +229,41 @@ function M.hook(hooked, opts)
       pcall(vim.cmd, string.format('execute "normal! %s"', hooked))
     if not ok then vim.api.nvim_echo({ { err, 'ErrorMsg' } }, true, {}) end
   end
-  hook_jump(opts.reverse and 'r' or nil)
+  return ret
+end
 
+---@return boolean
+function H.check()
+  local is_scrolled = vim.fn.getpos('w0')[2] ~= H.w0_saved
+  local is_buf_changed = vim.api.nvim_get_current_buf() ~= H.bufnr_saved
+  return is_scrolled or is_buf_changed
+end
+
+---@param opts NiceScrollHook.Options|NiceScrollHook.AsyncOptions
+function H.jump(opts)
+  if H.check() then M.adjust_eof(opts.reverse and 'r' or nil) end
+end
+
+---@param hooked string|function
+---@param opts NiceScrollHook.Options|nil
+function M.hook(hooked, opts)
+  opts = H.prepare_opts(hooked, opts or {})
+  H.save_current_pos()
+  local ret = H.do_hooked(hooked, opts)
+  H.jump(opts)
   if opts.hlslens and vim.g.loaded_nvim_hlslens == 1 then
     require('hlslens').start()
   end
+  return ret
+end
+
+---@param hooked string|function
+---@param opts NiceScrollHook.AsyncOptions|nil
+function M.hook_async(hooked, opts)
+  opts = H.prepare_opts(hooked, opts or {})
+  H.save_current_pos()
+  H.prepare_async(opts)
+  H.do_hooked(hooked, opts)
 end
 
 ---@param config NiceScroll.Config
@@ -171,7 +275,7 @@ function M.setup(config)
   end
 
   if M.config.search1 then
-    local aug = vim.api.nvim_create_augroup('NiceScrollNvim', {})
+    local aug = vim.api.nvim_create_augroup('NiceScrollSearch1', {})
     vim.api.nvim_create_autocmd('CmdlineLeave', {
       group = aug,
       pattern = '*',
