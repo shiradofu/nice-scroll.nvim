@@ -191,21 +191,10 @@ require('nice-scroll').setup {
 
 ## 🤝 Integrations
 
-I didn't refer to it above but integration options can be included in the second
-argument of the `hook()` function.
-
 ### [nvim-hlslens](https://github.com/kevinhwang91/nvim-hlslens/)
 
-By specifying `{ hlslens = true }` you can enable hlslens integration. But it's
-already included in the 'nice' default for `n` and `N`! So you don't have to do
-it manually. (If nvim-hlslens is not installed, it's just ignored.)
-
-```lua
--- This is perfect.
--- Ensure vim.g.loaded_nvim_hlslens == 1.
-vim.keymap.set({ 'n', 'x' }, 'n', function() require('nice-scroll').hook('n') end)
-vim.keymap.set({ 'n', 'x' }, 'N', function() require('nice-scroll').hook('N') end)
-```
+There's no need to configure. If `hlslens` can be `require`ed, it will be
+automatically enabled.
 
 ## 🙏 Credits
 

@@ -61,12 +61,7 @@ function M.adjust(n)
   local d = M.config.default
   n = n and n or d
   if n == 'r' then n = d <= 1 and 1 - d or w.last() - d end
-  exec(
-    w:target(
-      n --[[@as number]]
-    ),
-    w.current()
-  )
+  exec(w:target(n --[[@as number]]), w.current())
 end
 
 ---Bring the current cursor line to 'nice' position, but being careful not to
@@ -80,9 +75,7 @@ function M.adjust_eof(n)
   end
   local distance_from_current_to_eof = f.eof() - f.current()
   -- If M.adjust(n) would be executed, window line number of EOF is set to `_eof`.
-  local _eof = w:target(
-    n --[[@as number]]
-  ) + distance_from_current_to_eof
+  local _eof = w:target(n --[[@as number]]) + distance_from_current_to_eof
   local eof_target = w:target(M.config.eof)
   -- This is a line number comparison, so if it's smaller, it's over the limit.
   if _eof < eof_target then
@@ -112,7 +105,6 @@ end
 ---@field reverse boolean
 ---@field countable boolean
 ---@field debug boolean
----@field hlslens boolean
 
 ---@class NiceScrollHook.AsyncOptions
 ---@field timeout number
@@ -133,7 +125,7 @@ H.default_timeout = 1000000
 function H.prepare_opts(hooked, opts)
   -- Nice default for 'n' and 'N'
   if hooked == 'n' or hooked == 'N' then
-    opts = vim.tbl_extend('keep', opts, { countable = true, hlslens = true })
+    opts = vim.tbl_extend('keep', opts, { countable = true })
     if hooked == 'N' then
       opts = vim.tbl_extend('keep', opts, { reverse = true })
     end
@@ -179,7 +171,9 @@ function H.prepare_async(opts)
               group = cursor_moved,
               callback = function()
                 vim.defer_fn(
-                  function() vim.api.nvim_clear_autocmds { group = cursor_moved } end,
+                  function()
+                    vim.api.nvim_clear_autocmds { group = cursor_moved }
+                  end,
                   100
                 )
                 -- this is the main purpose: adjust the current line p
@@ -251,9 +245,8 @@ function M.hook(hooked, opts)
   H.save_current_pos()
   local ret = H.do_hooked(hooked, opts)
   H.jump(opts)
-  if opts.hlslens and vim.g.loaded_nvim_hlslens == 1 then
-    require('hlslens').start()
-  end
+  local ok, hlslens = pcall(require, 'hlslens')
+  if ok then hlslens.start() end
   return ret
 end
 
